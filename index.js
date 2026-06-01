@@ -4,6 +4,7 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
+console.log("KEY PREFIX:", GEMINI_API_KEY.substring(0, 10));
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 

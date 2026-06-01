@@ -30,6 +30,27 @@ app.post("/webhook", async (req, res) => {
       return res.sendStatus(200);
     }
 const reply = "Hello from Railway";
+    const from =
+  req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.from;
+
+await axios.post(
+  `https://graph.facebook.com/v25.0/${process.env.PHONE_NUMBER_ID}/messages`,
+  {
+    messaging_product: "whatsapp",
+    to: from,
+    text: {
+      body: reply
+    }
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+      "Content-Type": "application/json"
+    }
+  }
+);
+
+console.log("Reply sent!");
 console.log("AI Reply:", reply);
 
     console.log("AI Reply:", reply);

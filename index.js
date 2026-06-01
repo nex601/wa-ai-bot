@@ -68,8 +68,6 @@ await axios.post(
   }
 );
 
-console.log("Reply sent!");
-console.log("AI Reply:", reply);
 
     console.log("AI Reply:", reply);
 

@@ -4,7 +4,6 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 
 app.get("/webhook", (req, res) => {
@@ -26,59 +25,74 @@ app.post("/webhook", async (req, res) => {
     const message =
       req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.text?.body;
 
-    if (!message) {
+    const from =
+      req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.from;
+
+    if (!message || !from) {
       return res.sendStatus(200);
     }
-    console.log("KEY PREFIX:", GEMINI_API_KEY.substring(0, 10));
-    const gemini = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+
+    // GROQ AI
+    const groq = await axios.post(
+      "https://api.groq.com/openai/v1/chat/completions",
       {
-        contents: [
+        model: "llama-3.3-70b-versatile",
+        messages: [
           {
-            parts: [
-              {
-                text: `You are ItNex BD customer support. Reply professionally.\n\nCustomer: ${message}`
-              }
-            ]
+            role: "system",
+            content:
+              "You are ItNex BD customer support. Reply professionally and briefly."
+          },
+          {
+            role: "user",
+            content: message
           }
         ]
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "application/json"
+        }
       }
     );
 
     const reply =
-      gemini.data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      groq.data.choices?.[0]?.message?.content ||
       "Thank you for contacting ItNex BD.";
-    const from =
-  req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.from;
-
-await axios.post(
-  `https://graph.facebook.com/v25.0/${process.env.PHONE_NUMBER_ID}/messages`,
-  {
-    messaging_product: "whatsapp",
-    to: from,
-    text: {
-      body: reply
-    }
-  },
-  {
-    headers: {
-      Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
-      "Content-Type": "application/json"
-    }
-  }
-);
-
 
     console.log("AI Reply:", reply);
 
+    // Send WhatsApp reply
+    await axios.post(
+      `https://graph.facebook.com/v25.0/${process.env.PHONE_NUMBER_ID}/messages`,
+      {
+        messaging_product: "whatsapp",
+        to: from,
+        text: {
+          body: reply
+        }
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    console.log("Reply sent!");
+
     res.sendStatus(200);
   } catch (err) {
-    console.error(err.response?.data || err.message);
+    console.error(
+      err.response?.data || err.response?.status || err.message
+    );
     res.sendStatus(500);
   }
 });
 
-const PORT = process.env.PORT || 20296;
+const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server Running on ${PORT}`);

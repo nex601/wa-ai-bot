@@ -29,7 +29,25 @@ app.post("/webhook", async (req, res) => {
     if (!message) {
       return res.sendStatus(200);
     }
-const reply = "Hello from Railway";
+    console.log("KEY PREFIX:", GEMINI_API_KEY.substring(0, 10));
+    const gemini = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        contents: [
+          {
+            parts: [
+              {
+                text: `You are ItNex BD customer support. Reply professionally.\n\nCustomer: ${message}`
+              }
+            ]
+          }
+        ]
+      }
+    );
+
+    const reply =
+      gemini.data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "Thank you for contacting ItNex BD.";
     const from =
   req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.from;
 

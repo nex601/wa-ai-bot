@@ -4,7 +4,6 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
-console.log("KEY PREFIX:", GEMINI_API_KEY.substring(0, 10));
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 
@@ -30,7 +29,7 @@ app.post("/webhook", async (req, res) => {
     if (!message) {
       return res.sendStatus(200);
     }
-
+    console.log("KEY PREFIX:", GEMINI_API_KEY.substring(0, 10));
     const gemini = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
